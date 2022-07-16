@@ -152,7 +152,7 @@ contract AccesVesting {
     function withdrawalAcces(uint256 _amount, uint256 decimal, address to) external onlyOwner() {
         uint256 amount = Acces.balanceOf(address(this)).sub(investorsVault);
         uint256 dcml = 10 ** decimal;
-        require(amount > 0 && _amount&dcml >= amount, "No Acces!");// can only withdraw what is not locked for investors.
+        require(amount > 0 && _amount*dcml >= amount, "No Acces!");// can only withdraw what is not locked for investors.
         emit WithdrawalAcces( _amount, decimal, to);
         Acces.transfer(to, _amount*dcml);
     }
