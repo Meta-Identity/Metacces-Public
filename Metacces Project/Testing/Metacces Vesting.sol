@@ -1,5 +1,5 @@
 /**
- *Submitted for verification at BscScan.com on 2022-09-16
+ *Submitted for verification at BscScan.com on 2022-10-01
 */
 
 // SPDX-License-Identifier: MIT
@@ -800,6 +800,9 @@ contract AccesVesting {
     event TeamAdded(address Team, uint256 Amount);
     event AccesClaimed(address Investor, uint256 Amount);
     event ChangeOwner(address NewOwner);
+    event addressBlacklisted(address);
+    event removedFromBlacklist(address);
+    event fixedLock(address Investor);
     event MonthlyPercentageChanged(uint256 NewPercentage);
     event WithdrawalBNB(uint256 _amount, uint256 decimal, address to); 
     event WithdrawalAcces(uint256 _amount,uint256 decimal, address to);
@@ -875,10 +878,14 @@ contract AccesVesting {
         emit MonthlyPercentageChanged(_mP);
     }
     function addToBlackList(address _investor) external onlyOwner{
+        require(_investor != zeroAddress,"Zero address");
         blackList[_investor] = true;
+        emit addressBlacklisted(_investor);
     }
     function removeFromBlackList(address _investor) external onlyOwner{
+        require(_investor != zeroAddress,"Zero address");
         blackList[_investor] = false;
+        emit removedFromBlacklist(_investor);
     }
     function allVaults() internal{
         totalLocked = investorsVault.add(teamVault);
@@ -890,6 +897,7 @@ contract AccesVesting {
         samePercentage = false;
     }
     function editInvestorLock(address _investor, uint256 _yPercent, uint256 _mPercent) external onlyOwner{
+        require(_investor != zeroAddress && Investor[_investor] == true,"Zero address or address is not investor");
         require(_yPercent > 10 && _yPercent < 20,"Yearly percent limit!");
         require(_mPercent > 5 && _mPercent < 10,"Monthly percent limit");
         investor[_investor].yP = _yPercent;
@@ -1027,8 +1035,10 @@ contract AccesVesting {
             investorAllowance[msg.sender].yearlyAllowed += leftOver;
             investorAllowance[msg.sender].monthlyAllowed = investorAllowance[msg.sender].yearlyAllowed.div(12);
         }
+        emit fixedLock(msg.sender);
     }
     function withdrawalAcces(uint256 _amount, uint256 _path, address to) external onlyOwner() {
+        require(to != zeroAddress,"zero address");
         allVaults();
         uint256 amount = Acces.balanceOf(address(this)).sub(totalLocked);
         uint256 dcml = 10 ** _path;
@@ -1038,6 +1048,7 @@ contract AccesVesting {
         Acces.transfer(to, _amount*dcml);
     }
     function withdrawalBEP20(address _tokenAddr, uint256 _amount, uint256 decimal, address to) external onlyOwner() {
+        require(to != zeroAddress,"zero address");
         uint256 dcml = 10 ** decimal;
         ERC20 token = ERC20(_tokenAddr);
         require(token != Acces, "No!"); //Can't withdraw Acces using this function!
@@ -1045,6 +1056,7 @@ contract AccesVesting {
         token.transfer(to, _amount*dcml); 
     }  
     function withdrawalBNB(uint256 _amount, uint256 decimal, address to) external onlyOwner() {
+        require(to != zeroAddress,"zero address");
         require(address(this).balance >= _amount,"Balanace"); //No BNB balance available
         uint256 dcml = 10 ** decimal;
         emit WithdrawalBNB(_amount, decimal, to);
