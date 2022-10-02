@@ -186,7 +186,7 @@ contract AccesVesting {
            investorType = "Investor";
         }
         allVaults();
-        emit InvestorAdded(msg.sender, _amount, investorType, _lockTime.div(12));
+        emit InvestorAdded(_investor, _amount, investorType, _lockTime.div(12));
     }
     function claimMonthlyAmount() external isInvestor(msg.sender) isNotBlackListed(msg.sender) nonReentrant{
         require(investor[msg.sender].firstUnlock < block.timestamp,"Unlock in not available yet");
