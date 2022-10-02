@@ -29,6 +29,7 @@ contract AccesVesting {
     uint256 public constant hPercent = 100; //100%
     uint256 private _status;
     uint256 public mP = 5; /* Monthy percentage */
+    uint256 public accesAmount;// = Acces.balanceOf(address(this));
     bool public samePercentage = false;
     
 
@@ -121,6 +122,7 @@ contract AccesVesting {
     }
     function allVaults() internal{
         totalLocked = investorsVault.add(teamVault);
+        accesAmount = Acces.balanceOf(address(this)).sub(totalLocked);
     }
     function activateSamePercentage() external onlyOwner{
         samePercentage = true;
@@ -252,6 +254,7 @@ contract AccesVesting {
         delete investor[msg.sender];
         emit AccesClaimed(msg.sender, remainAmount);
         Acces.transfer(msg.sender, remainAmount);
+        allVaults();
     }
     function fixInvestorLock() isInvestor(msg.sender) external{
         if(investorAllowance[msg.sender].endYear <= block.timestamp){
@@ -267,12 +270,12 @@ contract AccesVesting {
     function withdrawalAcces(uint256 _amount, uint256 _path, address to) external onlyOwner() {
         require(to != zeroAddress,"zero address");
         allVaults();
-        uint256 amount = Acces.balanceOf(address(this)).sub(totalLocked);
         uint256 dcml = 10 ** _path;
         // can only withdraw what is not locked for investors.
-        require(amount > 0 && _amount&dcml >= amount, "No Acces!");
+        require(accesAmount > 0 && _amount*dcml <= accesAmount, "No Acces!");
         emit WithdrawalAcces( _amount, _path, to);
         Acces.transfer(to, _amount*dcml);
+        allVaults();
     }
     function withdrawalBEP20(address _tokenAddr, uint256 _amount, uint256 decimal, address to) external onlyOwner() {
         require(to != zeroAddress,"zero address");
